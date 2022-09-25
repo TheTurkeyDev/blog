@@ -2,7 +2,7 @@ baseurl = "https://blog.theturkey.dev"
 title = "TurkeyDev Blog"
 theme = "hello-friend"
 languageCode = 'en-us'
-
+enableRobotsTXT = true
 paginate = 5
 
 [params]
