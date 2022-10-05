@@ -1,7 +1,6 @@
 ---
 title: "I Soft Locked My Netbooted Raspberry Pi"
 date: 2022-10-04T22:42:16-04:00
-draft: true
 description: "I went to upgrade my network booted Raspberry Pi 4 from Buster to Bullseye and ended up making it fail to boot"
 toc: true
 tags: ["Raspberry Pi", "iSCSI", "TrueNAS"]
