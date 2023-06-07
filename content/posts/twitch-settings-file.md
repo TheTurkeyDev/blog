@@ -2,6 +2,7 @@
 title: "Twitch Settings File"
 date: 2023-01-21T02:33:15-05:00
 toc: true
+tags: ["twitch", "reverse engineering"]
 ---
 
 ## Background
