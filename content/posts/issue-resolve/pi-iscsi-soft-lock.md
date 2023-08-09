@@ -6,10 +6,12 @@ toc: true
 tags: ["Raspberry Pi", "iSCSI", "TrueNAS"]
 ---
 
+Edit: Nearly 1 year after I wrote this I did the exact same thing. Good news is that I eventually remembered this post and did successfully use it to resolve me issue. I have also edited this post from my second round at doing this.
+
 ## The Problem
 If you are looking to use this to help you, please read this section first. Make sure that you both have the same, or similar issue, and that you understand which path you should go down to solve this.
 
-I decided to upgrade my Raspberry Pi 4 that I have network booted off a TrueNAS Server using iSCSI. iSCSI is the key part here as it's needed so that the Pi can run Docker Containers off the network booted file system. Somewhere along the lines of upgrading my Pi 4 from Buster to Bullseye I either missed a step or messed something up because after rebooting the Pi I was greeted with errors. Mainly the 2 shown below:
+I decided to upgrade my Raspberry Pi 4 that I have network booted off a TrueNAS Server using iSCSI. iSCSI is the key part here as it's needed so that the Pi can run Docker Containers off the network booted file system. Somewhere along the lines of upgrading my Pi 4 from Buster to Bullseye (Seems even some apt-upgrades can trigger this issue too) I did not correctly update the boot files and after rebooting the Pi I was greeted with errors. Mainly the 2 shown below:
 
 ```
 libkmod: ERROR ../libkmod/libkmod-module.c:838 kmod_module_insert_module: could not find module by name='iscsi_tcp'
@@ -34,7 +36,7 @@ Again these actions are run on my second Pi unless otherwise said.
 1. Update the system to match the soft-locked Pi
     ```
     $ sudo apt update
-    $ sudo apt dist-upgrade
+    $ sudo apt dist-upgrade #Only needed if upgrading underlying versions of the OS i.e. Buster to Bullseye
     ```
 2. Install open-iscsi
     ```
@@ -47,7 +49,7 @@ Again these actions are run on my second Pi unless otherwise said.
     sudo nano /etc/iscsi/initiatorname.iscsi
     ```
     Comment out the existing `InitiatorName=....` and add a new `InitiatorName=....` entry below to be the name that the soft-locked Pi has. Because the files are on TrueNAS you can still access them via the built-in shell. I think the boot sequence also shows the name as well.
-4. Reboot the Pi (maybe not needed, but might as well I guess)
+4. Reboot the Pi (not needed, but might as well I guess)
 5. Setup the iSCSI "initiator"
     ```
     $ sudo touch /etc/iscsi/iscsi.initramfs
@@ -66,12 +68,10 @@ Again these actions are run on my second Pi unless otherwise said.
     $ sudo iscsiadm -m discovery -t sendtargets -p <ISCSI_SERVER_IP>
     ```
 9. Now that that has all been verified to work let's take this and attempt to repair our Pi. Copy the entire boot folder off this Pi to a location that can be accessed by TrueNAS. I happen to have a mount on my Desktop to an NFS share on TrueNAS, so I simply used FileZilla to copy the boot folder from the Pi to the TrueNAS NFS share.
-10. This step may or may not solve it. I technically did step 13 which encompasses this step, but I don't know if it's fully needed. Copy the initrd image file (it'll look something like this `initrd.img-5.15.61-v7l+`) from inside the boot folder that you just copied to TrueNAS to the boot folder of the Pi that's soft-locked. Again because the Pi is booted off TrueNAS we can easily see the boot folder in the TrueNAS data pool and can use the TrueNAS shell to copy the file.
-11. Edit the `config.txt` file of the soft-locked Pi and update the referenced `initrd.img` to be the one that you just copied into the boot folder.
-12. Attempt to boot the Pi! If all goes well, it should hopefully now work!?
-13. If it still doesn't boot, now copy everything from copied boot folder to the soft-locked Pi's boot folder EXCEPT, DO NOT replace the `config.txt` and `cmdline.txt`! These files need to be left as is because they have needed information on how to boot the Pi!
-14. With all the other files copied over, boot the Pi and I hope it now works! if not... I'm not sure what to say...
-15. Clean up step! don't forget to reset the `/etc/iscsi/initiatorname.iscsi` on the non-soft-locked Pi to the original value so that in the future it's not trying to mimic the hopefully now working Pi!
+10. Copy everything from copied boot folder to the soft-locked Pi's boot folder EXCEPT, DO NOT replace the `config.txt` and `cmdline.txt`! These files need to be left as is because they have needed information on how to boot the Pi!
+11. Edit the `config.txt` file of the soft-locked Pi and update the referenced `initrd.img` to be the latest version, i.e. the one we just generated
+12. Attempt to boot the Pi! If all goes well, it should hopefully now work!? if not... I'm not sure what to say...
+13. Clean up step! don't forget to reset the `/etc/iscsi/initiatorname.iscsi` on the non-soft-locked Pi to the original value so that in the future it's not trying to mimic the hopefully now working Pi!
 
 
 ## Rambling Comments
