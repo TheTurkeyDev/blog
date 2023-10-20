@@ -35,11 +35,11 @@ The ticker currently in SSB is pretty awkward. It's half a scoreboard and half a
 
 To start there will be 2 new looks. First being a minimalistic design:
 
-//TODO video demo
+![Minimal Ticker Design](./minimal_ticker.png)
 
 The second being a vintage ESPN style:
 
-//TODO video demo
+![ESPN Ticker Design](./espn_ticker.png)
 
 Overtime I'd love to add more, but these will be the 3 looks to start. If you have any suggestions on other designs or even how to improve these designs let me know!
 
@@ -48,19 +48,19 @@ Yes I know the site currently says scoreboard, but realistically it's a ticker. 
 
 A Minimal look, inspired by the scoreboard used in televised MLS games:
 
-//TODO video demo
+![Minimal Scoreboard Design](./minimal_scoreboard.png)
 
 A more feature complete scoreboard design:
 
-//TODO video demo
+![Default Scoreboard Design](./default_scoreboard.png)
 
 A Scoreboard geared towards baseball:
 
-//TODO video demo
+![Baseball Scoreboard Design](./baseball_scoreboard.png)
 
 Another more minimal box scores scoreboard:
 
-//TODO video demo
+![Box Scoreboard Design](./box_scoreboard.png)
 
 Like the Ticker though, I do plan to have one (or more) of these scoreboards available to everyone for free with possibly only the more feature complete or complex designs behind the subscription paywall. This is still to be determined, but I do want users to have some designs they can use freely.
 
