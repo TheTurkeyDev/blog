@@ -134,9 +134,22 @@ Breaking away from my "internet" based life, at this point I was in college and 
 
 Going along with my app dev job in college, I also had a few internships throughout my summers in college. One of note was with the Software Institute at Carnegie Mellon University. There I got to work with writing code to analyze malicious servers and build out a map that showed the links between these malicious servers and their IP addresses. Again, I won't speak too much more on this stuff outside of my "internet personality", but I still thought it would be cool to mention and also just to provide others some insight on how I progressed in computer science.
 
-### FPD Stats (TODO)
+### FPD Stats
 
-### Twitch Integration (TODO)
+FPD stats (Short for Flying Penguins of Doom), was a webapp I started developing in college. The goal of the project was to allow for better stat tracking of hockey games for players and teams. There's not much to say about this project as I ultimately scraped it, but it was the first project I used React in and the tech stack/ evolution has been interesting. I actually still own the fpdstats.com domain, so maybe I'll do something with it one day.
+
+The original Tech stack was a vanilla JS/ HTML/ CSS frontend with the backend being written in Python & Flask. I also explored websockets and socket.io for the first time for more "live" updating. I used vanilla Javascript at first because my biggest gripe with javascript and node was the sheer bulk and bloat of modules and dependencies. My only other prior JS experience was with JQuery which was still in use, but was very much on the way out as being a top choice for frontend development. I did a lot of the initial work using vanilla JS before learning the basics of React in my final internship and deciding that the JS just wasn't scalable for what I wanted. I then made the slow process of migrating all the code over to use React. I choose to still use Javascript for my React code instead of TypeScript as at the time TS was still fairly underused and the `any` keyword was abundant and I absolutely hated that. Ultimately this project was just a learning project for me and just didn't have the traction for me to make it a full fledge project.
+
+### Twitch Integration
+
+Through my time working with Darkosto and making mods for his various modpacks, he started to explore other games to play on his streams. I don't know how it specifically came about, but he eventually started playing games that allowed for mods to add ways for his Twitch chat to trigger events within these games. I helped work on a central app that he used for communications with these mods and Twitch as well as a few mods for these games to hook into that app.
+
+I've made Twitch Integration mods for a few games:
+- Slime Rancher: [Bonus Clip](https://www.twitch.tv/darkosto/clip/TawdryBovineBunnyKappaRoss)
+- Raft
+- RimWorld
+- Dunkum
+And maybe some others I can't think of
 
 ### Google Gobble Server
 
@@ -145,13 +158,30 @@ I originally wasn't going to talk much about this project, but I felt like I had
 ## "Modern Era"
 Like the "College Era" from above, this one is also a bit misnamed as it started in the second half of my college life, but hey, naming things is hard!
 
-### Call Of Minecraft: Zombies Resurrected (Again) (TODO)
+### Call Of Minecraft: Zombies Resurrected (Again)
 
 Oh yeah... this plugin.
 
 Well after a few years of this plugin sitting and slowly getting more and more neglected I decided I wanted to come back and polish it up for good... Ok a bit ambitious, but I was tired of this plugin being buggy and hacky. I knew I could do better and this plugin deserved better. I had a soft spot for it since it was my first big project.
 
-### Raspberry Pi & Microcontrollers (TODO)
+I spent a few days going over all the code and slowly bringing up to the level of code I'd write now. Some overall architecture things are a bit wonky as rewriting everything was a bit too much of a life, but things like weapons, barriers and other more isolated aspects I was able to rework.
+
+Speaking of the weapons, the guns were one part that got a big functionality change. Originally I had used snowballs as the "bullets" for guns. Upon right clicking with an item in hand that corresponded with a gun, I would spawn and shoot a snowball with various trajectories and velocities for different gun types and then upon hitting a zombie I would do damage based upon the gun shot with. Overall this was very clunky. The snowballs were very slow moving with relatively big hit boxes. Having to wait for a snowball to damage a zombie and then cancelling that event before damaging the zombie for real made it that much more complex to do everything. I took that and revamped it all. No more snowballs, hello ray tracing! Instead of shooting a snow ball the guns fired out a ray. This ray was all in code, but I did make it spawn some particles along it's path to give a visual indicator for the players. By using a ray, I can control the speed the bullet moves (instantaneous since the game has a low tick rate), how far it goes (different for the different types of guns), and how much it spread out for the shotguns. I do lose the "drop" in air over time and distance that bullets would have naturally, but honestly this isn't really a huge deal with a game like Minecraft where realism is just not a thing. In all I did things like this to lots of the other parts of the plugin, but there's not much more to say about it.
+
+In the end, I got the plugin to a point where all I really had to do was fix small bugs as they came up and update to new versions of Minecraft when they get released. The plugin doesn't have every feature from COD: Zombies and is actually missing a lot of them, but I feel like it does have all the core mechanics and is a solid plugin as a whole. The plugin is open source, so we will see if over time anyone from the community adds more things.
+
+### Raspberry Pi & Microcontrollers
+
+Up to this point, I've really just been coding and hadn't made too many physical projects. I had done Robotics in Highschool and did have other short stints with other electronic based projects, but I hadn't really gotten into doing electronics based projects. This changed when I started exploring Arduino's, raspberry Pi's and other microcontrollers. I was really just learning the basics and starting to mess with them, but over the next few years in college and then post college I would continue to explore them and learn new things. I can't think of too many things of note to show off and maybe I'll add more as I think of them, but here is a few things I can show off and talk about.
+
+#### Dorm Room LED Light Strip
+As a college student just before 2020, LED light strips on dorms and apartments were all the rage. As such I wanted to play around with building my own. I used my Arduino and a bluetooth module and coupled it with an Android app I wrote to be able to control the color and pattern of the LED strip. I don't remember many specifics about the project beyond this though.
+
+#### Physical Pong Using A Laser
+{{<youtube DhBq4UsooVc>}}
+This was made during the 2018 Ohio State Hack-a-thon
+
+I wanted to make this section here to sort of mark when I started to actually obtain these things and play around with them more seriously.
 
 ### Advent of Code (TODO)
 
@@ -162,6 +192,12 @@ Well after a few years of this plugin sitting and slowly getting more and more n
 ### Weird Game Engines (TODO)
 
 ### My Website & Server (TODO)
+
+### Custom Electronics Projects, PCB's and the likes
+
+### Stream Sports Widgets (TODO)
+
+### Rink Vision (TODO)
 
 
 [^1]: A modpack is simply a collection of mods that have been specially configured and adjusted to work together and create a new gameplay experience.
