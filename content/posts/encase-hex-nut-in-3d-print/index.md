@@ -4,6 +4,7 @@ date: 2023-06-07T13:30:41-04:00
 description: "How I encased a Hex Nut (and in theory other non-3d printed things) into a 3d print"
 toc: true
 tags: ["3d printing"]
+draft: true
 ---
 
 ![Final Print](./print_final.jpg)

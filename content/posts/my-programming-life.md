@@ -110,7 +110,7 @@ Again I could go on and on about this mod and honestly the length of this sectio
 - Yes, I knew going into this project that streamers would use this mod to incentivize supporting them financially, so no I don't take any issue with it. Kinda insane the amount of money it has generated for others though.
 
 - I received a death threat from a user of this mod... I wasn't all that worried about it being legit but was still crazy.
-{{< tweet user="DarkostoTV" id="755487771830124544" >}}
+{{<x user="DarkostoTV" id="755487771830124544" >}}
 
 - I've attempted to "port" this mod outside of a Forge mod to both a Bukkit plugin and also to a [Stardew Valley](https://www.curseforge.com/stardewvalley/mods/chance-cubes) mod... They both kinda flopped though.
 

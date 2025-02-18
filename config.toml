@@ -3,7 +3,7 @@ title = "TurkeyDev Blog"
 theme = "hello-friend"
 languageCode = 'en-us'
 enableRobotsTXT = true
-paginate = 5
+pagination.pagerSize = 10
 
 [params]
   contentTypeName = "posts"
