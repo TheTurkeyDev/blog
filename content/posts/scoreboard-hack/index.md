@@ -471,3 +471,35 @@ f607fffe0407fe9d
 ```
 
 Then after turning on the scoreboard I'm greeted with the avalanche of packets mentioned the first time. Overall this doesn't really help me as I'm not really learning anything I haven't already been assuming. I think the next test will be trying to mimic the controller and seeing what information I get back, but that's for later.
+
+### All The Packets So Far
+
+By now I've amassed a lot of packets and now that I've determined what I think to be the packet ID, let's try and make a big list of all the packet ID's and what data I think they hold. Parsing out 233 packets that I have gives the following packet ID's
+
+```
+0000 - Initial startup search req
+0001 - Initial startup search req
+0002
+0003
+0004 - Network info
+0008
+0010
+0011
+0018
+0019
+001b
+00ff
+0100
+01ff
+0200 - Generic Scoreboard state
+0201 - Time
+0203
+0204
+0205
+0206 - Change Team Name
+02ff
+0407
+0a05
+```
+
+The good news is that my theory about this being the packet ID is looking good. Bad news though is that I've deduced what very few of them are... Though now I have a solid base to continue to decode packets and work towards expanding the knowledge. Realistically I don't need to decode every single packet to make this work. Just the ones I can about since I'm only passively reading them.
