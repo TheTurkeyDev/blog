@@ -1,40 +1,40 @@
 ---
 title: "Scoreboard Reverse Engineering"
-description: ""
+description: "My progress as I attempt to reverse engineer the communications for the scoreboard at Heatwave Arena"
 date: 2025-02-14T20:01:13-05:00
-draft: true
+draft: false
 tags: ["hacking", "reverse engineering"]
 toc: true
 ---
 
 
 ## Premise & Goal
-I am attempting to hack the scoreboard at Heatwave Area, or well kind of. The goal for now is just to be able to read the current state of the scoreboard and be able to utilize that information for other projects. [I’ve been streaming some of my roller games here and I have a score bug on my stream](https://www.twitch.tv/turkeydev/clip/FilthyTawdryDonutKappaClaus-CPZQF9Gd1WU4-RtU). This score bug is actually driven from the site that is used to track the  league, but it would be much simpler and be better to eliminate the middleman and drive the score bug purely off the scoreboard that’s already here. Additionally there are some cool things we’d love to explore here at the rink such as adding LED’s that can do effects and be driven off the current state of the scoreboard.
+I am attempting to hack the scoreboard at Heatwave Area, or well kind of. The goal for now is just to be able to read the current state of the scoreboard and be able to utilize that information for other projects. [I’ve been streaming some of my roller games here and I have a score bug on my stream](https://www.twitch.tv/turkeydev/clip/FilthyTawdryDonutKappaClaus-CPZQF9Gd1WU4-RtU). This score bug is actually driven from the site that is used to track the  league schedule, standings, etc.., but it would be much simpler and better to eliminate the middleman and drive the score bug purely off the scoreboard that’s already here. Additionally there are some cool things we’d love to explore here at the rink such as adding LED’s that can do effects based off the current state of the scoreboard.
 
-Now Varsity Scoreboards does have a partnership with another company to give you 3rd party access to some of this data, but it requires a $500 piece of equipment and a $400 a year subscription. Suffice to say that is not in the budget and needing a 3rd party to be able to get the data out of the scoreboard the rink already owns is just….. Annoying, but this does show it is possible.
+Varsity Scoreboards, the maker of the scoreboard at Heatwave, does have a partnership with another company to give you 3rd party access to some of this data, but it requires a $500 piece of equipment and a $400/yr subscription. Suffice to say that is not in the budget and needing a 3rd party to be able to get the data out of the scoreboard the rink already owns is just….. Annoying, but this does show it is possible.
 
-So come along as I attempt to reverse engineer this scoreboard and if you know anything feel free to leave a comment. I am figuring this all out as I go and would love some helpful insights from those smarter than me at this.
+I am going into this blind and most everything about this is going to be a learning experience for me. While I do know how to program and have education around various aspects of this project, I've never tried to reverse engineer something where there is next to no documentation or outside examples. Let's just say I'm making this all up as I go.
 
-Quick disclaimer, I know I could use some sort of AI image to text algorithm on the scoreboard, but AI takes a lot more compute power than reverse engineering the communications and I’m just not someone who cares to mess with AI based projects. It’s a totally valid solution, just not the one I’m exploring.
+Quick disclaimer, I know I could use some sort of AI image to text algorithm on the scoreboard, but AI takes a lot more compute power than reverse engineering the communications and I’m just not someone who cares as much with AI based projects. It’s a totally valid solution, just not the one I’m exploring.
 
 ## Wireless Tangent
-Initially when this scoreboard was installed the controller, which handles all the user input and drivers what the scoreboard displays, was wireless and utilized a 2.4 giga hertz LoRa Transceiver module for communications.
+Initially when this scoreboard was installed the controller, which handles all the user input and drives what the scoreboard displays, was wireless and utilized a 2.4 gigahertz, LoRa Transceiver module for communications.
 
 ![Motherboard](./motherboard.png)
 
-I purchased the same module and started to try and use it to intercept the wireless packets. I didn’t get very far here, and I suspect the packets are encrypted, but the wireless connection between the scoreboard and controller was very flaky to say the least. There were constant disconnections between the scoreboard and controller that drove us up the wall. 
+I purchased the same module and started to try and use it to intercept the wireless packets. I didn’t get very far here, and I suspect the packets are encrypted, but the wireless connection between the scoreboard and controller was very flaky to say the least. There were constant disconnections between the scoreboard and controller and it drove us up the wall. 
 
 ## Wired Communication Standard
-Ultimately we settled to wire the controller to the scoreboard, so I moved my efforts to trying to reverse engineer the wired connection. This is where the project really starts. 
+Ultimately we settled to hard wire the controller to the scoreboard, so I moved my efforts to trying to reverse engineer the wired connection. This is where the project really starts. 
 
-First the connection utilizes 5 pin din connectors which realistically tells me nothing as there isn’t any sort of standards around the pinouts or what they are even carry. Even if there are, there’s always a chance the company could be using the cables outside of spec too. Opening the controller gives me much more information as I can clearly see traces running from 2 of the pins on these din connectors to an IC. 
+First, the connection utilizes a 5 pin din connector which realistically tells me nothing as there isn’t any sort of standard around the pinouts or what they are even carry. Even if there are, there’s always a chance the company could be using the cables outside of spec too. Inspecting the PCB and the internal half of the din connectors gives me much more information as I can clearly see traces running from 2 of the pins on these din connectors to an IC. 
 
 ![Image of the pin traces](./pin_traces.png)
 
-Sadly the IC’s have some sort of paint or covering over the IC’s markings, but with some careful lighting tricks and guesses I can make out the text VP12, which after googling leads me to [this family of RS-485 transceivers](https://www.ti.com/lit/ds/symlink/sn65hvd10.pdf).
+Sadly the IC’s have some sort of paint or coating over the IC’s markings, but with some careful lighting tricks and guesses I can make out the text `VP12`, which after googling leads me to [this family of RS-485 transceivers](https://www.ti.com/lit/ds/symlink/sn65hvd10.pdf). Specifically the `SN65HVD12P` variant as the datasheet denotes this one to have `VP12` marking on it's surface mount part.
 
 ## Intercepting Packets
-Now that I know what I am looking for with respect to the communications over the wired signal, I need to determine the pins carrying the communications and the protocol the controller and scoreboard are using to communicate. RS-485 is a communication that uses 2 wires in a half-duplex communication mode. Determining what 2 pins carry the data signal is mainly just following what pins the pcb traces go to on connector and then plugging into those two pins. For now I'll ignore the other 3 pins.
+Now that I know what I am looking for with respect to the communications over the wired signal, I need to determine the pins carrying the communications and the protocol the controller and scoreboard are using to communicate. RS-485 is a communication that uses 2 wires in a half-duplex communication mode with these IC's. Determining what 2 pins carry the data signal is mainly just following what pins the pcb traces go to on connector and then plugging into those two pins. For now I'll ignore the other 3 pins.
 
 **UPDATE:** I've since done some more investigation and deduced the following pinout with a picture and color key
 1. GND  (White)
@@ -45,12 +45,20 @@ Now that I know what I am looking for with respect to the communications over th
 
 ![Image of the DIN connector pinout](./din_pinout_colored.png)
 
-Next I can utilize a cheap logic analyzer and [Sigrok](https://sigrok.org/wiki/Main_Page) to determine the baud rate and protocol so that I can start loading the packets in code. I had never used a logic analyzer or this software before, but overall it wasn't too hard to use. Side note, you can actually use a Pi Pico as a logic analyzer if you so want and I did try it out for fun. Ultimately the cheap logic analyzer I got can handle way higher transmission speeds and baud rates for essentially the same price, but the Pi Pico would have worked for this scenario in the end.
+Next I can utilize a cheap logic analyzer and [PulseView](https://sigrok.org/wiki/Main_Page) to determine the baud rate and protocol so that I can start loading the packets in code. I had never used a logic analyzer or this software before, but overall it wasn't too hard to use. Side note, you can actually use a Pi Pico as a logic analyzer if you so want and I did try it out for fun. Ultimately the cheap logic analyzer I got can handle way higher transmission speeds and baud rates for essentially the same price, but the Pi Pico would have worked for this scenario in the end.
 
-With the logic analyzer connected I set Sigrok to scan at 9600 baud rate for TODO samples or equivalent to about TODO seconds for the given baud rate. I ran this and scrubbed through the output and lo and behold data! Now I did have a feeling this data would be using the UART protocol due to it being a very common protocol for both the rs-485 communications and electronics in general so I had Sigrok try and decode these data packets as UART. Unfortunately these data packets did not map cleanly to UART, but I decided to bump the baud rate to 11520 as it is another very common baud rate and shockingly, Sigrok was now showing valid packets for this data! 
+With the logic analyzer connected I set PulseView to sample at 200kHz for 1M samples or equivalent to 5 seconds. I ran this and scrubbed through the output and lo and behold data! 
+
+![Image of PulseView](./pulseview_1.png)
+
+Now I did have a feeling this data would be using the UART protocol due to it being a very common protocol for both the rs-485 communications and electronics in general so I had PulseView try and decode these data packets as UART. Unfortunately these data packets did not map cleanly to UART with the 9600 baud rate, but I decided to bump the baud rate to 11520 as it is another very common baud rate and shockingly, PulseView was now showing valid packets for this data!
+
+![Image of PulseView showing data](./pulseview_2.png)
+
+* Note, I got these screenshots after the fact and it seems there are some warnings on the UART packets. Just ignore this. I must have set something up wrong the second time around.
 
 ## Reading In Full Packets
-With the protocol, baud rate, and some other information determined it was now time to move on to reading in a packet with code! For this I decided to use Python and it's serial capabilities to just read in hex values over this serial connection. I wrote up a very basic program to verify I was getting valid hex that matched what sigrok showed on it's decoded packets.
+With the protocol, baud rate, and some other information determined it was now time to move on to reading in a packet with code! I purchased an RS-485 to USB converter and decided to use Python and it's serial capabilities to just read in hex values over this serial connection. I wrote up a very basic program to verify I was getting valid hex that matched what PulseView showed on it's decoded packets.
 
 ```Python
 import serial  # import the module
@@ -68,7 +76,7 @@ while True:
 con.close()  # Close the Com port
 ```
 
-No parsing, no grouping, nothing, just raw hex values to the terminal. After running it I am greeted with a lot of hex characters, but after a short while watching them roll in I start to see a very common 2 char byte and after cross referencing with Sigrok I determined every packet is started with `f6` as a sort of header byte. With that knowledge in hand I improved my program to build strings and output the current string buffer each time an `f6` is received signaling a new string or packet is beginning. Running this I start building up a big list of them and notice that I'm often getting a lot of the same packets over and over. [I built up a very crude parser and started to eliminate packets being logged until I was seeing nothing new in the terminal](https://github.com/TheTurkeyDev/Varsity-Scoreboard-Packet-Parser/blob/05152c53ab156f49164133d7c4f612f0fdb100e8/main.py). From there I started to build up large examples of each of these packets to compare them all together. 
+No parsing, no grouping, nothing, just raw hex values to the terminal. After running it I am greeted with a lot of hex characters, but after a short while watching them roll in I start to see a very common 2 character hex byte and after cross referencing with PulseView I determined every packet is started with `f6` as a sort of header byte. With that knowledge in hand I improved my program to build strings and output the current string buffer each time an `f6` is received signaling a new string or packet is beginning. Running this I start building up a big list of them and notice that I'm often getting a lot of the same packets over and over. [I built up a very crude parser and started to eliminate packets being logged until I was seeing nothing new in the terminal](https://github.com/TheTurkeyDev/Varsity-Scoreboard-Packet-Parser/blob/05152c53ab156f49164133d7c4f612f0fdb100e8/main.py). From there I started to build up large examples of each of these packets to compare them all together. 
 
 {{< details summary="Packets">}}
 ```
@@ -244,7 +252,7 @@ f6e6e65
 ```
 {{< /details >}}
 
-Additionally the Id's where the length of each packet varied slightly between them seemed to have a corresponding small 2, 3, or 4 bytes tiny packet following it (In the list ordered by receive time) that when appended to it made all the packets for that Id the same length. Obviously splitting on the `f6` byte alone is very imperfect and it any packet containing `f6` in its data will cause it to be chopped in half. Furthermore, now that all the packets were sorted, their length often grew bigger by 1 byte, when the Id changed by 1.
+Additionally the Id's where the length of each packet varied slightly between them seemed to have a corresponding small 2, 3, or 4 bytes tiny packet following it (In the list ordered by receive time) that when appended to it made all the packets for that Id the same length. Obviously splitting on the `f6` byte alone is very imperfect and in any packet containing `f6` in its data will cause it to be chopped in half. Furthermore, now that all the packets were sorted, their length often grew bigger by 1 byte, when the Id changed by 1.
 
 It's the packet length!!! I couldn't believe that I hadn't realized this sooner. This makes parsing in packets infinitely easier! [I was now able to parse in full packets to start analyzing them](https://github.com/TheTurkeyDev/Varsity-Scoreboard-Packet-Parser/blob/572c86570c2aa5089511aad664bea9ede78487c2/main.py).
 
@@ -294,16 +302,14 @@ Analyzing the packets it becomes pretty clear that certain bytes correspond to c
     yy = checksum?
 ```
 
-After looking at this packet for awhile I moved on to trying to deduce other packets and I did find some more information, but there are 2 vital pieces of information I have not been able to find yet. First I cannot figure out what byte or bytes correspond to some sort of packet Id. This is the last major piece of info missing before I'm really able to reliably parse, and store this information. Secondly I cannot for the world of me find the time for the scoreboard. I have a decent idea where it is, but I cannot figure out how to parse it.
-
-Let's dive into the other packets and what I've been able to decipher so far and talk about specific data points.
+After looking at this packet for awhile I moved on to trying to deduce other packets and I did find some more information, but there is still one piece of information I have not been able to find yet. I cannot figure out what byte or bytes correspond to some sort of packet Id. This is the last major piece of info missing before I'm really able to reliably parse, and store this information. Before I talk about deciphering the packet ID, let's talk about the ttuu bytes as it lead me to figuring out the packet ID.
 
 ### ttuu?
 
 What does ttuu mean? Well, I'm not really sure. Initially I thought it was some sort of extended header, but then I started leaning to it being some sort of source & destination info, but ultimately I'm not sure still. On thing I do know is that the tt value can change & does change each time the controller is started. I don't know why this is, or where this value comes from, but all the ttuu values that are `dcff` one time are `40ff` the next time and restarting the controller again they become `22ff` or another byte. It's easy to spot, and as far as I can tell stays consistent during the normal operation of the controller. These aren't the only values of ttuu though, just the most common. I'll take a deeper dive on this soon.
 
 ### Packet ID
-Finding the packet ID is a very crucial piece of information as it makes sorting, filtering, and decoding packets a world of a difference. Without it, I am currently relying on the packet length to know what packet is what. This obviously isn't ideal as multiple different packet types could have the same length. Going back to the partial packet data mask I deduced above `zzvvttuu......ppqq....aabbccddeeffgg..................hhiijjkkllmm..yy` Assuming these packets do have ID's (I'd be shocked if they didn't), There are only a few places the ID could live. The empty space between gg and hh doesn't make sense to have an ID as that is squarely within the core "data" of the packet and just wouldn't be realistic to put the ID there. Similarly this is the case for the 2 bytes between qq and aa. This leaves us with 4 bytes. 3 of which directly follow the unknown ttuu bytes and 1 at the end right before the suspected checksum. The end is possible, but unlikely and other packets do have decoded data in that spot, so that is also out leaving just the 3 bytes at the start of the packet after ttuu.
+Finding the packet ID is a very crucial piece of information as it makes sorting, filtering, and decoding packets a world easier. Without it, I am currently relying on the packet length to know what packet is what. This obviously isn't ideal as multiple different packet types could have the same length. Going back to the partial packet data mask I deduced above `zzvvttuu......ppqq....aabbccddeeffgg..................hhiijjkkllmm..yy` Assuming these packets do have ID's (I'd be shocked if they didn't), There are only a few places the ID could live. The empty space between gg and hh doesn't make sense to have an ID as that is squarely within the core "data" of the packet and just wouldn't be realistic to put the ID there. Typically the packet ID is one of the first pieces of information along with the packet length so that you know what data you are trying to decode. Similarly this is the case for the 2 bytes between qq and aa. This leaves me with 4 bytes. 3 of which directly follow the unknown ttuu bytes and 1 at the end right before the suspected checksum. The end is possible, but unlikely and other packets do have decoded data in that spot, so that is also out leaving just the 3 bytes at the start of the packet after ttuu.
 
 Looking at the packet that the above mask goes with, I see that `dcff` is out ttuu value and `020010` is the unknown 3 bytes. Lets look at some other packets and compare them all below:
 
@@ -337,7 +343,7 @@ Speaking of time, the time and clocks are a very tricky piece of information to 
 8) f608abff020107816d                          - Unknown
 ```
 
-We can see these all share the `0201` packet ID with the following byte containing another number. At first glance it seems like this would denote the id, or type of the clock this time is for, but if you look at packets 2 & 3 and then 4 & 5, you'll notice that the notes for these show they are for the same clock, but have different numbers. The clocks seem to have a different ID that is changing depending on if the clock's time is stopped or running. For the main scoreboard clock, it's ID is 0 if the time is running and 1 if stopped. The penalty clock is 4 is the time is running and 5 if the time is stopped. The important bit of info to note here is that the ID's are only changing by 1 and if I instead write out these numbers as binary
+Each of these packets are having changing values while the corresponding clock is running and staying the same while they are stopped, so safe to say they contain the time for the given clock. I can see these all share the `0201` packet ID with the following byte containing another number. At first glance it seems like this would denote the id, or type of the clock this time is for, but if you look at packets 2 & 3 and then 4 & 5, you'll notice that the notes for these show they are for the same clock, but have different numbers. The clocks seem to have a different ID that is changing depending on if the clock's time is stopped or running. For the main scoreboard clock, it's ID is 0 if the time is running and 1 if stopped. The penalty clock is 4 is the time is running and 5 if the time is stopped. The important bit of info to note here is that the ID's are only changing by 1 and if I instead write out these numbers as binary
 
 ```
 2) 0000 - Running
@@ -379,13 +385,25 @@ b83a0d - 14:30
 ec450d - 14:30
 ```
 
-Somehow these 3 bytes translate to the given time, but I cannot figure out how, especially since `b83a0d` and `ec450d` both seem to mean 14:30. You'd think that 00:01 would be easy to translate, but `e80300` makes no sense to get to 1 second. I'm not up to date on my float point precision math, but 24 bits is 8 short of the 32 needed and 0 padding doesn't seem to help when using a IEEE-754 floating point converter.
+Somehow these 3 bytes translate to the given time, but I cannot figure out how, especially since `b83a0d` and `ec450d` both seem to mean 14:30. You'd think that 00:01 would be easy to translate, but `e80300` makes no sense to get to 1 second. I'm not up to date on my float point precision math, but 24 bits is 8 short of the 32 needed and 0 padding doesn't seem to help when using a IEEE-754 floating point converter. Some part of me just knew this had to be some sort of number encoding. Because of that I decided to include the 4th byte for each of the above numbers which is just 00 and I ended up finding [this website](https://www.scadacore.com/tools/programming-calculators/online-hex-converter/) which allows you to enter in a hex string and it gives you the corresponding value in about a dozen different encodings. Inputting `b83a0d00` as the hex string gives the following results
+
+![Website output](./number_encodings_website_1.PNG)
+
+From this output I can easily rule out some of them. All the floating point precisions contain numbers no where near being able to get to 14:30. `INT32 - Big Endian` is a negative number, so that's also out. All the 16 bit precision numbers can also be ignored since I am working with 32 bits here.
+
+This leaves me with 7 options, but I can narrow it down a little further and ignore the weird Mid endian encodings as who actually uses that? So now I am down to 3 options. `UINT32 - Big Endian`, `UINT32 - Little Endian`, and `INT32 - Little Endian`. I could do the math as I have a strong feeling that this value is just the time in milliseconds, or very close to it, but let's pick a more round number that's easier to visually verify. 1 minute, or the hex string of it `60ea0000`, should give us a nice round number of 60 with some number of 0's. I also happen to know this has no millisecond value as well. Throwing this value into the website I get the following results
+
+![Website output](./number_encodings_website_2.PNG)
+
+I left the 14:30 hex value for further correlation, but as you can see `UINT32 - Big Endian` is far from a more "round" number. This means that our time is being encoded in either `UINT32 - Little Endian` or `INT32 - Little Endian`! What's the difference? Well UINT means unsigned in whereas INT is signed, i.e. can be a negative number. It doesn't make sense to have time be negative, so I will proceed with the time being stored as a `UINT32 - Little Endian` encoded number.
 
 ### Checksum
 
 What's up with the check sum? Well, I think it's some sort of check sum or parity calculation. It's at the end of the packets, it changes when the content of the packet changes and stays the same otherwise. I cannot for the life of figure out the algorithm for calculating this and asking ChatGPT just causes it to defy the laws of simple arithmetic to get an answer.
 
 ![Image bad AI math](./ai_math.png)
+
+It would be nice to have this math solved for calculating it and validating packets, but is not necessary at the moment.
 
 ### Start-up Sequence
 
@@ -470,36 +488,126 @@ f607ffff0001ffa5
 f607fffe0407fe9d
 ```
 
-Then after turning on the scoreboard I'm greeted with the avalanche of packets mentioned the first time. Overall this doesn't really help me as I'm not really learning anything I haven't already been assuming. I think the next test will be trying to mimic the controller and seeing what information I get back, but that's for later.
+Then after turning on the scoreboard I'm greeted with the avalanche of packets mentioned the first time. Overall this doesn't really help me as I'm not really learning anything I haven't already been assuming. I think the next test will be trying to mimic the controller and seeing what information I get back, but that's for a later time.
 
-### All The Packets So Far
+## All The Packets So Far
 
-By now I've amassed a lot of packets and now that I've determined what I think to be the packet ID, let's try and make a big list of all the packet ID's and what data I think they hold. Parsing out 233 packets that I have gives the following packet ID's
+The good news is that my theory about this being the packet ID is looking good. Bad news though is that I've deduced what very few of them are so far... Realistically I don't need to decode every single packet to make this work. Just the ones I can about since I'm only passively reading them. Here's the list of packets I've seen so far and what I've been able to decode about them. I'll keep updating this list as I learn and decode more!
 
 ```
-0000 - Initial startup search req
-0001 - Initial startup search req
+Common Packet byte labels
+- zz = f6 initiator
+- vv = Packet Length
+- ttuu = Src & Dest? Not sure. tt has a value that changes each time the controller turns on
+- aa = Ida These Id's feel like that have 2 parts to them
+- bb = Idb
+- yy = checksum?
+- .. = Unknown
+
+
+0000 | Initial startup search req?
+0001 | Initial startup search req?
 0002
 0003
-0004 - Network info
+0004 | Unknown | Contains Network name
+    zzvvttuuaabb......................[nn]yy
+    nn = Network name.  Any length
 0008
 0010
 0011
 0018
 0019
 001b
-00ff
+00ff | Unknown | Also seems to have a 3rd ID part?
+    - 01 | Unknown
+    - 02 | Unknown
+        Contains scoreboard model
+
+    - 08
+        zzvvttuuaabb..........iijj..............yy
+        ii = Some sort of counter
+        jj = Counter pt 2
+
+    - 10 | Unknown
+        Contains sport & Scoreboard model
+
+    - 11 | Unknown
+        zzvvttuuaabbiijjjj.... Lots more data
+        ii = 3rd ID
+        jjjj = Network Id? These seem sequential
+        Contains a network name & Scoreboard model
+
+    - 18 | Unknown
+        List of options?
+
+    - 19 | Unknown
+        List of options? Extension of 18?
+
+    - 1a | Unknown
+        zzvvttuuaabbii....yy
+        ii = 3rd ID
+
+    - 1b | Unknown
+        zzvvttuuaabbii..jjyy
+        ii = 3rd ID
+        jj = Counter?
 0100
 01ff
-0200 - Generic Scoreboard state
-0201 - Time
+0200 | Generic Scoreboard state
+    zzvvttuu......ppqq....ccddeeffgghhii..................jjkkllmmnnoo..yy
+    cc = Home score
+    dd = Away score
+    ee = Home Shots
+    ff = Away shots
+    gg = Home Goal
+    hh = Away goal
+    ii = Period
+    jj = Home 1st penalty number
+    kk = Home 2nd penalty number
+    ll = Away 1st penalty number
+    mm = Away 2nd penalty number
+    nn = Home Penalty Indicator
+    oo = Away Penalty Indicator
+    pp = Packet counter
+    qq = PAcket counter 2?
+0201 | Time
+    Timer IDs:
+    - 0 | Game Clock
+        zzvvttuuaabbiinnnnnnnn..yy
+        ii = Timer ID, Last bit is 1 = Stopped, 0 = Running
+        nnnnnnnn = Time encoded as a UINT32 number in little endian
+
+    - 2 | Penalty Clock
+        zzvvttuuaabbii.annnnnnnn..yy
+        ii = Timer ID, Last bit is 1 = Stopped, 0 = Running
+        a = Scoreboard Pen slot
+        nnnnnnnn = Time encoded as a UINT32 number in little endian
+
+    - 3 | Penalty less?
+        zzvvttuuaabbii.pyy
+        ii = Timer ID, Last bit is 1 = Stopped, 0 = Running
+        p = Scoreboard Pen slot
+
+    - 4 | Time of day
+        zzvvttuuaabbii..hhmmssyy
+        ii = Timer ID, Last bit is 1 = Stopped, 0 = Running
+        hh = Hours
+        mm = Minutes
+        ss = Seconds
+
+    - 5 | Unknown
 0203
 0204
 0205
-0206 - Change Team Name
+0206 | Change Team Name
+    zzvvttuuaabb..hh[tt]yy
+    hh = is Home? 0 = home, 1 = away
+    [tt] = The Text. Any length
 02ff
 0407
 0a05
 ```
 
-The good news is that my theory about this being the packet ID is looking good. Bad news though is that I've deduced what very few of them are... Though now I have a solid base to continue to decode packets and work towards expanding the knowledge. Realistically I don't need to decode every single packet to make this work. Just the ones I can about since I'm only passively reading them.
+## Further Work
+
+As I work on this more and decode these packets I'll update the above list and also include notes below, but at this point I feel I have all the tools, information needed, and major hurdles out of the way to to just slowly chip away at this.
