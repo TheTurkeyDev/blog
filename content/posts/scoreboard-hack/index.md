@@ -501,29 +501,37 @@ Common Packet byte labels
 - ttuu = Src & Dest? Not sure. tt has a value that changes each time the controller turns on
 - aa = Ida These Id's feel like that have 2 parts to them
 - bb = Idb
-- yy = checksum?
+- yy = checksum | last 4 bits are the sum of the packet data in two's compliment | First 4 bits?
 - .. = Unknown
 
 
 0000 | Initial startup search req?
+    zzvvttuuaabbyy
+
 0001 | Initial startup search req?
 0002
 0003
+
 0004 | Unknown | Contains Network name
     zzvvttuuaabb......................[nn]yy
     nn = Network name.  Any length
-0008
+
+0008 | Unknown
+    zzvvttuuaabbccyy
+    cc = Unknown, but I've only seen 00
+
 0010
 0011
 0018
 0019
 001b
+
 00ff | Unknown | Also seems to have a 3rd ID part?
     - 01 | Unknown
     - 02 | Unknown
         Contains scoreboard model
 
-    - 08
+    - 08 | Unknown
         zzvvttuuaabb..........iijj..............yy
         ii = Some sort of counter
         jj = Counter pt 2
@@ -551,10 +559,12 @@ Common Packet byte labels
         zzvvttuuaabbii..jjyy
         ii = 3rd ID
         jj = Counter?
+
 0100
 01ff
+
 0200 | Generic Scoreboard state
-    zzvvttuu......ppqq....ccddeeffgghhii..................jjkkllmmnnoo..yy
+    zzvvttuuaabb..ppqq....ccddeeffgghhiirr................jjkkllmmnnoo..yy
     cc = Home score
     dd = Away score
     ee = Home Shots
@@ -570,12 +580,16 @@ Common Packet byte labels
     oo = Away Penalty Indicator
     pp = Packet counter
     qq = PAcket counter 2?
+    rr = Show Minutes?
+
 0201 | Time
     Timer IDs:
     - 0 | Game Clock
         zzvvttuuaabbiinnnnnnnn..yy
         ii = Timer ID, Last bit is 1 = Stopped, 0 = Running
         nnnnnnnn = Time encoded as a UINT32 number in little endian
+
+    - 1 | Unknown
 
     - 2 | Penalty Clock
         zzvvttuuaabbii.annnnnnnn..yy
@@ -596,13 +610,16 @@ Common Packet byte labels
         ss = Seconds
 
     - 5 | Unknown
+
 0203
 0204
 0205
+
 0206 | Change Team Name
-    zzvvttuuaabb..hh[tt]yy
+    zzvvttuuaabb..hh[nn]yy
     hh = is Home? 0 = home, 1 = away
-    [tt] = The Text. Any length
+    [nn] = The Text. Any length
+
 02ff
 0407
 0a05
@@ -611,3 +628,135 @@ Common Packet byte labels
 ## Further Work
 
 As I work on this more and decode these packets I'll update the above list and also include notes below, but at this point I feel I have all the tools, information needed, and major hurdles out of the way to to just slowly chip away at this.
+
+## Error Byte/ Checksum Revisit - March 2025
+
+I've been reading in and logging packets and have amassed over 3k unique packets, but I've run into an issue with Invalid/ corrupted packets causing a lot of noise. Packets like `f614f608bdff0201078359f622bdff020010130000` are pretty clearly invalid and have bits of multiple packets smashed together, but some others may not be so easy to determine. To counter this, I need to solve the error checking to be able to eliminate these bad packets.
+
+As mentioned in the first pass at this, the last byte of the packet appears to be some sort of error check, but how do I use it? I started with trying to use known tools and algorithms for determining this logic. Some searching lead me to the tool CRC RevEng which essentially is a command line app that you pass some of your packets to and the width in bits of your crc and it will analyze the packets and find a CRC algorithm that works for your examples. Sadly for me, after playing around with the app, it found nothing. Ok, what if I xor all of the bytes together? Nope, not that either. Essentially I spent a few weeks on and off trying different methods and ways to find how this byte is calculated and I got nothing. At this point it's basically driving me insane.
+
+Let's try a new approach, lets take a step back and analyze the packets more. Starting with one of the shortest packets I see often `f607bd01000800dd`. Short enough to not need too much math and maybe I can visually see how the math works, but this packet alone doesn't seem to shed any light. I then had the idea to try and find packets that have the same error byte, but different packet contents. After looking some I found the error byte `ba` to have the following packets:
+
+```
+f622bdff0200100100000000000000000001010100000000000000ffffffff000000ba
+f622bdff0200100200000000000000000001000100000000000000ffffffff000000ba
+f60cbdff0201004cc3000016ba
+f614bd0000ff0848f21b3b800c00007f007f7f7fba
+f614bd0000ff0848f21b3b810b00007f007f7f7fba
+f614bd0000ff0848f21b3b820a00007f007f7f7fba
+f614bd0000ff0848f21b3b830900007f007f7f7fba
+f614bd0000ff0848f21b3b840800007f007f7f7fba
+f614bd0000ff0848f21b3b850700007f007f7f7fba
+f614bd0000ff0848f21b3b860600007f007f7f7fba
+f614bd0000ff0848f21b3b870500007f007f7f7fba
+f614bd0000ff0848f21b3b880400007f007f7f7fba
+f614bd0000ff0848f21b3b890300007f007f7f7fba
+f614bd0000ff0848f21b3b8a0200007f007f7f7fba
+f614bd0000ff0848f21b3b8b0100007f007f7f7fba
+f614bd0000ff0848f21b3b8c0000007f007f7f7fba
+```
+
+Crucially are the 00ff packets here. They have the same error byte, but the packets have 2 bytes inside them that change between each packet. Nicely enough the change is the same between each packet with 1 byte incrementing while the other decrements. From this I can deduce that the error byte is likely using some form of addition in its calculation as each of the 2 bytes add up to 8c which if you replace the 2 changing bytes in each packet with 8c gives identical packets that would thus produce the same error byte!
+
+Progress, but this still doesn't give us the answer as adding up all the bytes in a packet gives us `e6` (sum is truncated to 2 bytes) which sadly is not `ba`. Ignoring `f6` in the sum gives us `f0` and ignoring `14` as well gives `dc`, so addition alone isn't the math.
+
+Looking for more packets to aid the search brought me back to my packets above when I first attempted to decode the packets
+
+```
+f622dcff0200103200000000000000000001000000000000000000ffffffff0000006c - 14 min, per 1
+f622dcff0200103300000001000000000001000000000000000000ffffffff0000006a - 14 min, per 1, home 1
+f622dcff0200103400000002000000000001000000000000000000ffffffff00000068 - 14 min, per 1, home 2
+f622dcff0200103500000002010000000001000000000000000000ffffffff00000066 - 14 min, per 1, home 2, away 1
+f622dcff0200103600000002010100000001000000000000000000ffffffff00000064 - 14 min, per 1, home 2, away 1, home shot 1
+```
+
+Analyzing these packets I can see that 2 bytes are changing by a value of 1 each time. This is the same as the previous packet just mentioned, but this time, both bytes are increasing in value, thus their changes don't cancel each other out. Curiously though, this increase in value leads to a decrease in the error byte. This means while we may have addition as the core math operation, somewhere we either have a subtraction, or something like a one's or two's compliment to get our final error byte.
+
+Let's write out the sums of 3 of these packets and do some comparisons to the error byte.
+
+__Packets:__
+```
+f607bd01000800                                                          =  c3   =   1100 0011
+f622bdff0200100100000000000000000001010100000000000000ffffffff000000    =  e6   =   1110 0110
+f614bd0000ff0848f21b3b830900007f007f7f7f                                =  e6   =   1110 0110
+```
+
+__Error Bytes:__
+```
+dd  =   1101 1101
+ba  =   1011 1010
+```
+
+__Packet Sum One's Compliment:__
+```
+c3 = 1100 0011 -> 0011 1100
+e6 = 1110 0110 -> 0001 1001
+```
+
+__Packet Sum Two's Compliment:__
+```
+c3 = 1100 0011 -> 0011 1101
+e6 = 1110 0110 -> 0001 1010
+```
+
+__Compare:__
+```
+c3 One's Compliment != dd   |   0011 1100 != 1101 1101
+c3 Two's Compliment != dd   |   0011 1101 != 1101 1101
+e6 One's Compliment != ba   |   0001 1001 != 1011 1010
+e6 Two's Compliment != ba   |   0001 1010 != 1011 1010
+```
+
+Wait a minute, did you see that? Let me reorganize the binary for the two's compliment
+
+```
+c3 -> 0011 1101
+dd -> 1101 1101
+
+e6 -> 0001 1010
+ba -> 1011 1010
+```
+
+The second 4 bits (fun fact, 4 bits is called a nibble) actually match up! Coincidence? Let's find 5 more random packets:
+
+
+__Packets:__
+```
+1. f618ffff000428160a56bd180148f21b3b486f636b657932f7
+2. f608bdff020107815b
+3. f608bdff0201078359
+4. f607bdff020200e3
+5. f60cbdff02030008f04dff6d2c
+```
+
+__Packet Sums and Two's Compliment:__
+```
+1. a9 = 1010 1001 -> 0101 0111
+2. 45 = 0100 0101 -> 1011 1011
+3. 47 = 0100 0111 -> 1011 1001
+4. bd = 1011 1101 -> 0100 0011
+5. 74 = 0111 0100 -> 1000 1100
+```
+
+__Compare the second 4 bits to the second 4 bits of the error check byte:__
+```
+1. 0111 = 0111
+2. 1011 = 1011
+3. 1001 = 1001
+4. 0011 = 0011
+5. 1100 = 1100
+```
+
+I've done it! I've figured out the math for the error check! Well, Actually only half of it. Now I have to figure out what the first 4 bits mean. Let's take a look at those 5 packets and look at the first 4 bits this time with the value they need to be equal to:
+
+```
+1. a = 1010 | f = 1111
+2. 4 = 0100 | 5 = 0101
+3. 4 = 0100 | 5 = 0101
+4. b = 1011 | e = 1110
+5. 7 = 0111 | 2 = 0010
+```
+
+Unfortunately it seems the sum does not translate into the first 4 bits as is or using and sort of one's/ two's compliment.
+
+To be continued...
