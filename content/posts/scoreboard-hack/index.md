@@ -611,6 +611,10 @@ Common Packet byte labels
 
     - 5 | Unknown
 
+0202 | Horn
+    zzvvttuuaabbcc...
+    cc = Is the horn active
+
 0203
 0204
 0205
