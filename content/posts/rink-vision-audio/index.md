@@ -85,10 +85,16 @@ The only missing piece is the connector for the camera's I/O port. I could reuse
 
 You can see the pre-amp slotted on the bottom back of the camera and on the side is the 5V regulator and USB port to more easily connect to the pre-amp's power plug. It's a mess of wires, but it needs to work before I can improve the system.
 
+Now with it all hooked up and ready to use, how does it sound?
+
+{{< video src="./audio_clip_ringing.mp4"  type="video/mp4" width="600" >}}
+
+Well unfortunately there seems to be a high pitch ringing sound in the audio. I can actually hear this physically coming from the audio amp as well. I'm far from an audio or electrical engineer, so my best guess is that the 12V power source isn't very clean or there is some sort of interference on the audio line. Or even a combo of both.
+
 ## Next steps ##
 
 This is just the second iteration of the proof of concept system with this variant not needing a battery or second external power source. There is still lots to improve. Mainly I want to reduce the number of wires and better mount the regulator which will hopefully help in reducing the wire mess.
 
-More importantly is more testing with the microphone and seeing how far away I can move the microphone from the camera. The first test the camera was on top of the camera, but not only is this in the danger area for getting hit, but now the rink is adding a fan behind the net for the goalies, so having a camera right next to the fan is a no go. I now will need to relocate the microphone further away and thus will need to test the limits there.
+A custom PCB may also be needed to to not only help reduce wires, but to also help clean and isolate the power source so it's not effecting the audio quality.
 
 I will try and update this post as revisions and changes are made
